@@ -39,9 +39,9 @@ The Flickr dataset has become a standard benchmark for sentence-based image desc
 
 each  image.  Such  annotations  are  essential  for  continued  progress  in  automatic  image  description  and  grounded  language understanding. They enable us to define a new benchmark for the localization of textual entity mentions in an image. For our study, we used the Flickr-8k dataset due to computational and time constraints.  However, our study can be directly applied to Flick-30k as well due to its similarity with the Flickr-8k dataset. 
 
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.003.jpeg) ![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.004.png)
-
-**Figure 1:**  Illustration depicting four dataset samples from the Flickr-8k dataset 
+<p align="center">
+  <img src="readme_imgs/one.png" alt="Approach-2 Outputs" width="80%"/>
+</p>
 
 4. **Experimental Setup** 
 
@@ -51,6 +51,10 @@ For performing our experiments, we used a Python 3 Google Compute Engine GPU Mac
 
 Figure 2 below presents different frameworks, methods, and approaches that were extensively used in recent research works based on their core structure. [2] 
 
+<p align="center">
+  <img src="readme_imgs/taxonomy.png" alt="Image Captioning Approaches" width="80%"/>
+</p>
+
 For our study, we experimented with 2 approaches i.e. (a) Convolutional network-based and (b) Attention-based. Following are the main steps that are performed in our experiments of training Image Captioning Models:- 
 
 1. Data  Extraction  and  EDA:- We took the Flickr-8k Dataset from the Kaggle and performed EDA (Exploratory Data Analysis) to thoroughly understand the data and its structure. We have mainly two types of data i.e. Images and Captions (Text). The total size of the training vocabulary is 8485. 
@@ -58,13 +62,9 @@ For our study, we experimented with 2 approaches i.e. (a) Convolutional network-
 1. Loading  the  training  set:-  This  step  involved  loading  our  data  in  a  dictionary  keeping  the  image names as keys and their corresponding captions in list format as values. Later we randomly shuffle these key-value mappings(dictionary) and split our data into training and testing sets by keeping 90% of the data for training and the rest 10% for testing. 
 1. Image  Feature  Encoding:- In this step, we first resize our images and then leverage the transfer learning approach to prepare our Image Feature Encoder.  It takes the source photo as input and produces an encoded representation of it that captures its essential features. 
 
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.005.png)
-
-**Figure 2:** The taxonomy of the image captioning methods 
-
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.006.png)
-
-**Figure 3:** Image Feature Encoding 
+<p align="center">
+  <img src="readme_imgs/FeatureEncoding.png" alt="Feature Encoding" width="80%"/>
+</p>
 
 This uses a CNN architecture and is usually done using transfer learning. We take a CNN model that was pre-trained for image classification and removed the final section which is the ‘classifier’.  There are several such models like VGGNet, ResNet, and Inception. It is the “backbone” of the Image Captioning Model which progressively extracts various features from the photo and generates a compact feature map that captures the most important elements in the picture. For example, it starts by extracting simple geometric shapes like curves and semi-circles in the initial layers, later progressing to higher-level structures such as noses, eyes, and hands, and eventually identifying elements such as faces and wheels.[3], [4] 
 
@@ -72,14 +72,15 @@ This uses a CNN architecture and is usually done using transfer learning. We tak
 5. Data Preparation for Model Training: Using the dictionary mapping of Image Name and their corresponding captions prepared in Step-2, the Image Feature Encoder prepared in Step-4 and the Sequence Decoder prepared in Step-5 prepare the final input data for model training in the form of different arrays storing Image Encoded Features, Word Features extracted from Sequence Decoder and Caption(encoded  as  categorical  outputs  with  several  categories  equal  to  the  length  of vocabulary). These three arrays will be used to train our final Image Captioning model.[4] 
 5. Model  Architecture: The Inject architecture was the original architecture for Image Captioning and  is still very popular.  However, an alternative called Merge architecture has been found to produce better results.  Rather than connecting the Image Encoder as the input of the Sequence Decoder sequentially, the two components operate independently of each other. In other words, we don’t mix the two modes ie. images with text.[4]
 
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.007.jpeg)
-
 **Figure 4:** Mapping image features with text sequences 
 
 1) The CNN network processes only the image and 
 1) The LSTM network operates only on the sequence generated so far. 
 
 The outputs of these two networks are then combined with a Multimodal layer (which could be a Linear and Softmax layer). It does the job of interpreting both outputs and is followed by the Sentence Generator that produces the final predicted caption. 
+<p align="center">
+  <img src="readme_imgs/MappingImageSequences.png" alt="Image Sequence mapping with text" width="80%"/>
+</p>
 
 8. Word Embeddings: In NLP, word embeddings are numerical representations of words within a large vector space. They aim to  capture  semantic  and  syntactic  similarities  between  words  based  on  their  contextual  usage in a corpus.  For our experiments, we started with using Glove-50 embeddings but later trusted on TensorFlow Tokenizer word indexes due to the following reasons:- 
 1) Task Alignment:  For the specific task of image captioning, the language context doesn’t require highly intricate relationships  between  words,  and  TensorFlow  Tokenizer  word  indexes  seemed  sufficient  to  achieve  good performance without the need for complex word embeddings like GloVe at least during the experimentation phase. In the production environment, we can use sophisticated embeddings like Glove. 
@@ -117,51 +118,44 @@ In the decoder, we added 2 dense layers, the first dense layer with ReLU activat
 
 We trained our model for 132 epochs in total and made multiple hyperparameter optimizations during training. 
 
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.008.jpeg)
-
-**Figure 5:** Training Model Architecture for Approach-1 
+<p align="center">
+  <img src="readme_imgs/Model-1-architecture.png" alt="Model-1-architecture" width="80%"/>
+</p>
 
 - **Epochs and Batch Size:**  While training, we trained the first 34 epochs of our model with a batch size of 64. Then we trained the next 40 epochs with a batch size of 32 and the last 58 epochs with a batch size of 16. We opted for this progressive training strategy intentionally as starting with larger batch sizes and gradually reducing them allowed the model to benefit from both the efficiency of larger batches (faster convergence) and the fine-tuning capabilities of smaller batches (better generalization). 
 - **EarlyStopping:** Early stopping was implemented with the patience of 2 epochs initially later increasing it to 6 epochs in the hope of targeting more loss reduction.  Training stops automatically if there is no reduction in loss in 6 consecutive epochs. 
 5. **Model Performance Evaluation and Results** 
 
 We evaluated the performance of our model by computing the BLEU score metric for 1 gram and 2 grams on test data with random images, whose results are as follows: 
-
-- BLEU−1:  0 . 486157 ![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.009.png)
+- BLEU−1:  0 . 486157 
 - BLEU−2: 0 . 263054 
 - BLEU−3: 0 . 156096 
 - BLEU−4: 0 . 088182 
 
 Also, we wrote inference code to test the performance of our model manually on random images, whose results are as follows: 
+<p align="center">
+  <img src="readme_imgs/Approach-1Outputs.png" alt="Approach-1 Outputs" width="80%"/>
+</p>
 
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.010.jpeg)![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.011.jpeg)
-
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.012.jpeg) ![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.013.jpeg)
-
-**Figure 6:**  Output captions for some sample images from Approach-1 Model 
-
-**4  Approach-2: Image Captioning with Attention-based model** 
+**4  Approach-2: Image Captioning with Attention-based Model** 
 
 1. **Inception-v3 for Image Encoding** 
 
-In this approach, we relied on Inception-v3 as our image encoder to extract image features. Similar to VGG16, Inception-v3 is also an object detection and classification algorithm and was introduced during ImageNet Recog- nition Challenge.  It is the third edition of Google’s Inception Convolutional Neural Network.  The design of Inception-v3 allows deeper networks while also keeping the number of parameters from going too large. It has under 25 million trainable parameters compared to 138 million in VGG-16.[3], [4] Our intention behind shifting from VGG-16 to Inception-v3 was multi-scale feature extraction. Since Inception-v3 utilizes inception modules with multiple filter sizes, it enables the model to capture information at different scales within the same layer. Therefore, we extracted feature vectors using inception-v3 to extract features from images at various scales i.e. improved feature vectors.  It takes input images of shape (299,299,3) where 299,299 is the size of the image with 3 color channels i.e.  RGB images.  We extracted features from Inception-v3 by removing the last fully connected(dense) layer which is mainly responsible for the classification task’s output, because our main goal was to extract more abstract and semantically meaningful image features for captioning instead of performing any classification. Also, save the encoded image feature vector in a .npy form for further processing. Then we pass the extracted image features through a dense layer to transform them into a suitable format for attention mechanism processing. The output from this dense layer will be the output of our encoder. 
-
+In this approach, we relied on Inception-v3 as our image encoder to extract image features. Similar to VGG16, Inception-v3 is also an object detection and classification algorithm and was introduced during ImageNet Recognition Challenge.  It is the third edition of Google’s Inception Convolutional Neural Network.  The design of Inception-v3 allows deeper networks while also keeping the number of parameters from going too large. It has under 25 million trainable parameters compared to 138 million in VGG-16.[3], [4] Our intention behind shifting from VGG-16 to Inception-v3 was multi-scale feature extraction. Since Inception-v3 utilizes inception modules with multiple filter sizes, it enables the model to capture information at different scales within the same layer. Therefore, we extracted feature vectors using inception-v3 to extract features from images at various scales i.e. improved feature vectors.  It takes input images of shape (299,299,3) where 299,299 is the size of the image with 3 color channels i.e.  RGB images.  We extracted features from Inception-v3 by removing the last fully connected(dense) layer which is mainly responsible for the classification task’s output, because our main goal was to extract more abstract and semantically meaningful image features for captioning instead of performing any classification. Also, save the encoded image feature vector in a .npy form for further processing. Then we pass the extracted image features through a dense layer to transform them into a suitable format for attention mechanism processing. The output from this dense layer will be the output of our encoder. 
+<p align="center">
+  <img src="readme_imgs/InceptionV3.png" alt="InceptionV3" width="80%"/>
+</p>
 2. **Attention Mechanism** 
 
-The purpose of the attention mechanism is to allow the model to dynamically focus on different parts of the image during the caption generation process.  We implemented the attention mechanism as a separate layer, referred to as BahdanauAttention. It takes encoded image features from the encoder and the previous hidden state from the decoder as inputs to compute attention weights, indicating the importance of different parts of the image for the current decoding step.  These attention weights are further used to create a context vector, considering the weighted sum of the encoded image features. Let’s discuss how Bahdanau Attention works inbrief.[7], [8]
-
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.014.jpeg)
-
-**Figure 7:** Inception-v3 Model Architecture 
+The purpose of the attention mechanism is to allow the model to dynamically focus on different parts of the image during the caption generation process.  We implemented the attention mechanism as a separate layer, referred to as BahdanauAttention. It takes encoded image features from the encoder and the previous hidden state from the decoder as inputs to compute attention weights, indicating the importance of different parts of the image for the current decoding step.  These attention weights are further used to create a context vector, considering the weighted sum of the encoded image features. Let’s discuss how Bahdanau Attention works in brief.[7], [8]
 
 - Bahdanau Attention Mechanism:  Deriving its name from the first author of the paper in which it was published, the most important distinguishing feature of this approach from the basic encoder-decoder is that it does not attempt to encode a whole input sentence into a single fixed-length vector.  Instead, it encodes the input sentence into a sequence of vectors and chooses a subset of these vectors adaptively while decoding the translation.[8] 
 3. **Decoder** 
 
-The purpose of the decoder is to generate captions based on the encoded image features and the attention- weighted  context vector.  The decoder is an LSTM-based recurrent neural network (RNN) that processes the attention-weighted image features and the previously generated words to predict the next word in the caption sequence. It consists of an embedding layer to convert the input word indices into continuous vector representations.  The LSTM layer processes the sequential input, maintaining a hidden state that captures context information. It is then followed by a fully connected layer, transforming the LSTM output into the final vocabulary distribution for the next word prediction. Here also we utilized a data generator to handle training data in batches, preventing memory issues and improving computational efficiency.  This generator ensures diverse samples are used for training without overwhelming system resources.  It is an important step every time we deal with large datasets to prevent any memory issues and improve overall computational efficiency.[6] 
-
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.015.jpeg)
-
-**Figure 8:**  Structure depicting how all components are working jointly 
+The purpose of the decoder is to generate captions based on the encoded image features and the attention-weighted  context vector.  The decoder is an LSTM-based recurrent neural network (RNN) that processes the attention-weighted image features and the previously generated words to predict the next word in the caption sequence. It consists of an embedding layer to convert the input word indices into continuous vector representations.  The LSTM layer processes the sequential input, maintaining a hidden state that captures context information. It is then followed by a fully connected layer, transforming the LSTM output into the final vocabulary distribution for the next word prediction. Here also we utilized a data generator to handle training data in batches, preventing memory issues and improving computational efficiency.  This generator ensures diverse samples are used for training without overwhelming system resources.  It is an important step every time we deal with large datasets to prevent any memory issues and improve overall computational efficiency.[6] 
+<p align="center">
+  <img src="readme_imgs/ComponentWorking.png" alt="Approach-2 Outputs" width="80%"/>
+</p>
 
 4. **Model Compilation and Training** 
 - **Loss Function and Optimizer:**  We used the sparse categorical cross-entropy loss function for our model as it is suitable for multi-class classification tasks. For optimization we used Adam to adaptively adjust learning rates, leading to faster convergence and better generalization. 
@@ -170,50 +164,50 @@ The purpose of the decoder is to generate captions based on the encoded image fe
 We trained our model for 140 epochs in total. For this approach also we performed certain hyperparameter optimizations: 
 
 - **Epochs and Batch Size:**  For training we first trained the model with a batch size of 128, but it was not giving optimal results. So we reduced the batch size to 64 later and trained the model for 140 epochs. 
-- **RNN unit:**  We also experimented with different numbers of rnn decoding units. 
+- **RNN unit:**  We also experimented with different numbers of RNN decoding units. 
 5. **Model Performance Evaluation and Results** 
 
 We evaluated the performance of our model by computing the BLEU score metric for 1 gram and 2 grams on test data with random images. whose results are as follows: 
 
-- BLEU−1:  0 . 646201 ![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.016.png)
+- BLEU−1:  0 . 646201
 - BLEU−2: 0 . 537954 
 - BLEU−3: 0 . 455301 
 - BLEU−4: 0 . 380474 
 
 Also, we wrote inference code to test the performance of our model manually on random images. We deliberately tested our model for some same images on which we tested the model trained in approach-1 to analyze and compare the performance, whose results are as follows: 
 
-![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.017.jpeg) ![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.018.jpeg)
+<p align="center">
+  <img src="readme_imgs/Approach-2_Outputs.png" alt="Approach-2 Outputs" width="80%"/>
+</p>
 
-` `![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.019.jpeg)![](Aspose.Words.4cb4a8e5-eea2-4fd8-922b-0362d671eb6b.020.jpeg)
-
-**Figure 9:**  Output captions for some sample images from Approach-2 Model 
 
 **5  Comparison** 
 
+| Exp. No. | Image Captioning Model | BLEU-1 | BLEU-2 | BLEU-3 | BLEU-4 |
+|----------|------------------------|--------|--------|--------|--------|
+| 1        | CNN Based              | 48.62  | 26.3   | 15.6   | 8.82   |
+| 2        | Attention Based        | 64.62  | 53.79  | 45.53  | 38.04  |
 
+Table 1: Comparing two Approaches of training Image Captioning Model
 
-|**Exp.  No.** |**Image Captioning Model** |**BLEU-1**|**BLEU-2** |**BLEU-3** |**BLEU-4** |
-| - | - | - | - | - | - |
-|1 2 |CNN Based Attention Based |48\.62 64.62 |26\.3 53.79 |15\.6 45.53 |8\.82 38.04 |
-
-**Table 1:** Comparing two Approaches of training Image Captioning Model 
-
-On comparing the performance of both of our approaches our first approach i.e. CNN-based approach and the second approach i.e. Attention Based approach, it’s visible that the second approach outperformed the first ap- proach based on BLEU score results. The simplicity of the model in the first approach allows for faster training, but its inherent sequential processing may cause context blindness, limiting its ability to capture intricate details and relationships in complex images. On the contrary, the second approach inducts  the  Bahdanau  Attention  Mechanism  into  the  encoder-decoder  architecture.  This  enhancement  allows  the  model  to dynamically focus on specific regions of the image during caption generation, providing selective attention. The attention mech- anism  significantly  improves  the  model’s  context  understanding,  enabling  it  to  capture  fine-grained  details  and  intricate relationships between objects in the image. However, this enhancement comes at the cost of increased complexity and potentially longer training times compared to the non-attention model. 
+On comparing the performance of both of our approaches our first approach i.e. CNN-based approach and the second approach i.e. Attention Based approach, it’s visible that the second approach outperformed the first approach based on BLEU score results. The simplicity of the model in the first approach allows for faster training, but its inherent sequential processing may cause context blindness, limiting its ability to capture intricate details and relationships in complex images. On the contrary, the second approach inducts  the  Bahdanau  Attention  Mechanism  into  the  encoder-decoder  architecture.  This  enhancement  allows  the  model  to dynamically focus on specific regions of the image during caption generation, providing selective attention. The attention mechanism  significantly  improves  the  model’s  context  understanding,  enabling  it  to  capture  fine-grained  details  and  intricate relationships between objects in the image. However, this enhancement comes at the cost of increased complexity and potentially longer training times compared to the non-attention model. 
 
 Another reason behind the second model’s capability of capturing small details in images could be the use of Inception-v3 architecture for extracting image features. As we discussed before we shifted from VGG-16 in the first approach to Inception-v3 in the second approach for better image features as inception is known for capturing multi-scale features from images. So, it seems that inception-v3 played its role successfully. [9] 
 
+| SOTA Ranking | Image Captioning Model    | BLEU-4 |
+|--------------|---------------------------|--------|
+| 25           | Meshed-Memory Transformer | 39.1   |
+| 26           | CLIP Text Encoder         | 38.2   |
+| 27           | Our Attention Based Approach | 38.04 |
+| 28           | RefineCap                 | 37.8   |
+| 29           | RDN                       | 37.3   |
+| 30           | ClipCap                   | 33.53  |
 
-
-|**SOTA  Ranking** |**Image Captioning Model** |**BLEU-4** |
-| - | - | - |
-|25 |Meshed-Memory Transformer |39\.1 |
-|26 **27** |<p>CLIP Text Encoder </p><p>**Our Attention Based Approach** </p>|38\.2 **38.04** |
-|28 29 |RefineCap RDN |37\.8 37.3 |
-|30 |ClipCap |33\.53 |
+Table 2: Comparison of our model (Flickr-8k) with other State Of The Art Image Captioning models (COCO)
 
 **Table 2:** Comparison of our model(Flickr-8k) with other State Of The Art Image Captioning models(COCO) 
 
-While observing and analyzing the above table, one important factor should be kept in mind: all of the state-of- the-art models were trained on the COCO (Microsoft Common Objects in Context) dataset, whereas we used the Flickr-8k dataset for our study. The size difference between the Flickr-8k and COCO datasets is enormous, with the COCO dataset containing 328K images with 5 captions per image compared to the Flickr dataset’s  8k images. Still, to demonstrate the competence of our trained model and to justify our choice of architecture, hyperparameter values, and data preprocessing steps, we showcased this comparison, as our model was able to climb up in the state-of-the-art rankings with a comparatively smaller dataset. 
+While observing and analyzing the above table, one important factor should be kept in mind: all of the state-of-the-art models were trained on the COCO (Microsoft Common Objects in Context) dataset, whereas we used the Flickr-8k dataset for our study. The size difference between the Flickr-8k and COCO datasets is enormous, with the COCO dataset containing 328K images with 5 captions per image compared to the Flickr dataset’s  8k images. Still, to demonstrate the competence of our trained model and to justify our choice of architecture, hyperparameter values, and data preprocessing steps, we showcased this comparison, as our model was able to climb up in the state-of-the-art rankings with a comparatively smaller dataset. 
 
 **6  Future Work and Improvements** 
 
@@ -221,7 +215,7 @@ Apart from training our model on large datasets like COCO, we will integrate CLI
 
 **7  Conclusion** 
 
-In conclusion, our exploration into different approaches for training image captioning models has unveiled valuable insights to improve  accuracy  and  model  resilience.  We  trained  to  merge  architecture  and  discussed  its  comparison  with  “Inject” architectures.  We  observed  that  the  “Merge”  architecture,  by  decoupling  the  encoding  and  decoding  processes,  can  yield improvements in captioning accuracy and efficiency. This approach mallowed for more flexible interactions between the image and language modalities, enabling the model to capture intricate relationships and enhance overall performance. 
+In conclusion, our exploration into different approaches for training image captioning models has unveiled valuable insights to improve  accuracy  and  model  resilience.  We  trained  to  merge  architecture  and  discussed  its  comparison  with  “Inject” architectures.  We  observed  that  the  “Merge”  architecture,  by  decoupling  the  encoding  and  decoding  processes,  can  yield improvements in captioning accuracy and efficiency. This approach allowed for more flexible interactions between the image and language modalities, enabling the model to capture intricate relationships and enhance overall performance. 
 
 We  also  investigated  the  impact  of  two  image  encoder  architectures,  VGGNet  and  Inception,  on  the  quality  and informativeness of encoded representations. The findings underscored the significance of the choice of the encoder, with Inception demonstrating superior performance. The multi-scale features extracted by Inception contributed to more detailed and contextually relevant captions, showcasing the importance of selecting an image encoder architecture considering the complexities of the image dataset. 
 
